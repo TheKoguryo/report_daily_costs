@@ -4,10 +4,6 @@ import datetime
 import argparse
 
 def report_daily_costs(tenant_id, ons_topic_id):
-    identity_client = oci.identity.IdentityClient(config)
-    notification_client = oci.ons.NotificationDataPlaneClient(config)
-    usage_api_client = oci.usage_api.UsageapiClient(config)
-
     now = datetime.datetime.now()
     yesterday = now - datetime.timedelta(days=1)
     time_usage_started = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -96,12 +92,17 @@ if __name__ == "__main__":
         start_time.replace(microsecond=0).isoformat()))    
 
     # Default config file and profile
-    config = oci.config.from_file()
-
-    signer = None
+    #config = oci.config.from_file()
+    #signer = None
     #signer = oci.auth.signers.get_resource_principals_signer()
-    #signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
-        
+
+    config = {}
+    signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+
+    identity_client = oci.identity.IdentityClient(config={}, signer=signer)
+    notification_client = oci.ons.NotificationDataPlaneClient(config, signer=signer)
+    usage_api_client = oci.usage_api.UsageapiClient(config, signer=signer)
+
     args = prep_arguments()
     tenant_id = args.tenant_id
     ons_topic_id = args.ons_topic_id
