@@ -11,6 +11,6 @@ cd $APPDIR
 ###########################################################
 echo "Start running at `date`..."
 
-python3 $APPDIR/report_daily_costs.py --tenant_id $TENANT_ID --ons_topic_id $ONS_TOPIC_ID
+python3 $APPDIR/report_daily_costs.py -ip --ons_topic_id $ONS_TOPIC_ID
 
 echo "Completed at `date`.."
