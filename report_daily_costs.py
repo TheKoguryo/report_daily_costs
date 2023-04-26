@@ -97,8 +97,10 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
                 )
             ).data
     
+    print("data: " + str(data))
+
     for item in data.items:
-        if item.computed_amount is None:
+        if item.computed_amount is None or item.computed_amount == 0.0:
             continue
         
         one_day_ago_amount += item.computed_amount
@@ -122,7 +124,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
             ).data
     
     for item in data.items:
-        if item.computed_amount is None or item.computed_amount == 0.0 :
+        if item.computed_amount is None or item.computed_amount == 0.0:
             continue
 
         if item.is_forecast == True:
@@ -140,7 +142,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
             one_day_ago_forecast_amount += item.computed_amount
             body += message
 
-        if item.time_usage_started.strftime('%y-%m-%d') == yesterday.strftime('%y-%m-%d'):
+        if item.time_usage_started.strftime('%y-%m-%d') == today.strftime('%y-%m-%d'):
             print("item: " + str(item))
             today_ago_forecast_amount += item.computed_amount
             body += message
@@ -174,7 +176,7 @@ def prep_arguments():
                         help='The tenant where you want to get a daily cost report')
     parser.add_argument('--ons_topic_id', default='', dest='ons_topic_id',
                         help='The notification topic id where you want to publish a message for notifying ')
-    parser.add_argument('-ip', default=False,
+    parser.add_argument('-ip', action='store_true', default=False,
                         help='Use Instance Principals for Authentication')
     
     args = parser.parse_args()

@@ -40,19 +40,19 @@
 2. Install the Python OCI SDK
 
 ```
-$ pip3 install oci
+pip3 install oci
 ```
 
 3. Copy the report_daily_costs source into /home/opc
 
 ```
-$ git clone https://github.com/TheKoguryo/report_daily_costs.git
+git clone https://github.com/TheKoguryo/report_daily_costs.git
 ```
 
 4. Create a cron job. In the terminal, type:
 
 ```
-$ crontab -e
+crontab -e
 ```
 
 5. Type ``i`` to insert a new line.
@@ -76,7 +76,7 @@ In my test, it is best to run the script every 6 AM GMT. If you run early, the c
     - - - - -
     | | | | |
     | | | | ---- Day of week (0 - 7) (Sunday=0 or 7)
-    | | | ------- Month (1 - 12)
+    | | | ------ Month (1 - 12)
     | | -------- Day of month (1 - 31)
     | ---------- Hour (0 - 23)
     ------------ Minute (0 - 59)
