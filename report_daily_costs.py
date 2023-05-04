@@ -128,7 +128,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
             continue
 
         if item.is_forecast == True:
-            message = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + " (forecasted))\n"
+            message = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + " (forecasted)\n"
         else:
             message = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + "\n"
 
