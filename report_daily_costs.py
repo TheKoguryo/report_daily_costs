@@ -6,7 +6,7 @@ import logging
 import datetime
 import argparse
 
-version = "23.04.26"
+version = "23.05.04"
 
 def report_daily_costs(tenant_id, ons_topic_id):
     now = datetime.datetime.now()
@@ -128,7 +128,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
             continue
 
         if item.is_forecast == True:
-            message = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + " Forecast\n"
+            message = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + " (forecasted))\n"
         else:
             message = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + "\n"
 
@@ -153,13 +153,13 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
     tenancy = identity_client.get_tenancy(tenant_id).data
 
     if difference > 0:
-        title = "[" + f'{difference:,.2f}' + "% Up]"
+        title = "[" + f'{difference:,.2f}' + "% ⬆]"
     elif difference == 0:
         title = "[No Difference]"
     else:
-        title = "[" + f'{difference:,.2f}' + "% Down]"
+        title = "[" + f'{difference:,.2f}' + "% ⬇]"
 
-    title += " Tenancy " + tenancy.name + ": Daily Cost Report (" + yesterday.strftime('%m') + "/" + yesterday.strftime('%d') + ") - "
+    title += " Tenancy " + tenancy.name + ": Daily Cost Report (" + yesterday.strftime('%m') + "/" + yesterday.strftime('%d') + " UTC) - "
     title += currency + " " + f'{one_day_ago_amount:,.0f}'
     title += " (EOM)"
 
