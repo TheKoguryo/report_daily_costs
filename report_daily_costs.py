@@ -42,8 +42,8 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         currency = item.currency
 
         body = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}'
-        body += + " (Calculation in progress...)"
-        body += + "\n"
+        body += " (Calculation in progress...)"
+        body += "\n"
 
     # Forecast
     data = usage_api_client.request_summarized_usages(
