@@ -32,7 +32,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
                 )
             ).data
     
-    print("data: " + str(data))
+    logging.getLogger().debug("data: " + str(data))
 
     for item in data.items:
         if item.computed_amount is None or item.computed_amount == 0.0:
