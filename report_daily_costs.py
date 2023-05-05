@@ -8,71 +8,6 @@ import argparse
 
 version = "23.05.04"
 
-def report_daily_costs(tenant_id, ons_topic_id):
-    now = datetime.datetime.now()
-    yesterday = now - datetime.timedelta(days=1)
-    time_usage_started = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
-    time_usage_ended = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    one_day_ago_amount = 0
-    two_days_ago_amount = 0
-
-    ## Yesterday
-    data = usage_api_client.request_summarized_usages(
-                request_summarized_usages_details=oci.usage_api.models.RequestSummarizedUsagesDetails(
-                    tenant_id=tenant_id,
-                    time_usage_started=time_usage_started,
-                    time_usage_ended=time_usage_ended,
-                    granularity="DAILY"
-                )
-            ).data
-    
-    for item in data.items:
-        if item.computed_amount is None:
-            continue
-        
-        one_day_ago_amount += item.computed_amount
-        currency = item.currency
-
-    ## The day before yesterday
-    data = usage_api_client.request_summarized_usages(
-                request_summarized_usages_details=oci.usage_api.models.RequestSummarizedUsagesDetails(
-                    tenant_id=tenant_id,
-                    time_usage_started=time_usage_started - datetime.timedelta(days=1),
-                    time_usage_ended=time_usage_ended - datetime.timedelta(days=1),
-                    granularity="DAILY"
-                )
-            ).data
-    
-    for item in data.items:
-        if item.computed_amount is None:
-            continue
-        
-        two_days_ago_amount += item.computed_amount
-
-    difference = (one_day_ago_amount / two_days_ago_amount) * 100 - 100
-
-    # Notification
-    title =""
-    tenancy = identity_client.get_tenancy(tenant_id).data
-
-    if difference > 0:
-        title = "[" + f'{difference:,.2f}' + "% Up]"
-    elif difference == 0:
-        title = "[No Difference]"
-    else:
-        title = "[" + f'{difference:,.2f}' + "% Down]"
-
-    title += " Tenancy " + tenancy.name + ": Daily Cost Report (" + time_usage_started.strftime('%m') + "/" + time_usage_started.strftime('%d') + ") - "
-    title += currency + " " + f'{one_day_ago_amount:,.0f}'
-    title += " (EOM)"
-
-    logging.getLogger().info("ons_topic_id: " + ons_topic_id)
-
-    notification_message = {"title": title, "body": " "}
-    logging.getLogger().info("notification_message: " + str(notification_message))
-    notification_client.publish_message(ons_topic_id, notification_message)    
-
 def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
     today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     yesterday = today - datetime.timedelta(days=1)
@@ -163,11 +98,12 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
     title += currency + " " + f'{one_day_ago_amount:,.0f}'
     title += " (EOM)"
 
-    logging.getLogger().info("ons_topic_id: " + ons_topic_id)
-
-    notification_message = {"title": title, "body": body}
-    logging.getLogger().info("notification_message: " + str(notification_message))
-    notification_client.publish_message(ons_topic_id, notification_message)    
+    if difference > alert_threshold or datetime.datetime.now().hour == 23 :
+        logging.getLogger().info("ons_topic_id: " + ons_topic_id)
+    
+        notification_message = {"title": title, "body": body}
+        logging.getLogger().info("notification_message: " + str(notification_message))
+        notification_client.publish_message(ons_topic_id, notification_message)    
 
 
 def prep_arguments():
@@ -176,6 +112,8 @@ def prep_arguments():
                         help='The tenant where you want to get a daily cost report')
     parser.add_argument('--ons_topic_id', default='', dest='ons_topic_id',
                         help='The notification topic id where you want to publish a message for notifying ')
+    parser.add_argument('--alert_threshold', default='', dest='alert_threshold',
+                        help='The threshold which you want to notify it over than ')    
     parser.add_argument('-ip', action='store_true', default=False,
                         help='Use Instance Principals for Authentication')
     
@@ -223,6 +161,6 @@ if __name__ == "__main__":
         usage_api_client = oci.usage_api.UsageapiClient(config=config)
 
     ons_topic_id = args.ons_topic_id
+    alert_threshold = args.alert_threshold
 
-    ##report_daily_costs(tenant_id, ons_topic_id)
-    report_daily_costs_with_forecast(tenant_id, ons_topic_id)
+    report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold)

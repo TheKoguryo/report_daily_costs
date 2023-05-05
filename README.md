@@ -39,49 +39,66 @@
 
 2. Install the Python OCI SDK
 
-```
-pip3 install oci
-```
+    ```
+    pip3 install oci
+    ```
 
 3. Copy the report_daily_costs source into /home/opc
 
-```
-git clone https://github.com/TheKoguryo/report_daily_costs.git
-```
+    ```
+    git clone https://github.com/TheKoguryo/report_daily_costs.git
+    ```
 
-4. Create a cron job. In the terminal, type:
+4. Update the value of ONS_TOPIC_ID to your Topic OCID in run_report_daily_costs.sh
 
-```
-crontab -e
-```
+    ```
+    export ONS_TOPIC_ID=ocid1.onstopic.oc1.iad.aaaaaaaa.....
+    ```
 
-5. Type ``i`` to insert a new line.
+5. Update the value of alert-threshold in run_report_daily_costs.sh
 
-6. Write your running schedule.
+    ```
+    # cron schedule - 0 * * * * 
+    # Notify at 23:00
+    #
+    # Check the yesterday's cost every hours that is under being calculated.
+    # If that cost is more than the cost of the day before yesterday and the difference is over threshold, notify at that time.
+    python3 $APPDIR/report_daily_costs.py -ip --ons_topic_id $ONS_TOPIC_ID --alert-threshold 50
+    ```
 
-In my test, it is best to run the script every 6 AM GMT. If you run early, the cost will be increased until 6 AM GMT.
+6. Create a cron job. In the terminal, type:
 
-```
-###############################################################################
-# Crontab to run report_daily_costs
-###############################################################################
-0 6 * * * timeout 1h /home/opc/report_daily_costs/run_report_daily_costs.sh > /home/opc/report_daily_costs/run_report_daily_costs.sh_run.txt 2>&1
-```
+    ```
+    crontab -e
+    ```
 
-7. Save and close the file (ESC, then :x or :wq).
+7. Type ``i`` to insert a new line.
 
-*Syntax of crontab:*
+8. Write your running schedule.
 
-    * * * * * command to be executed
-    - - - - -
-    | | | | |
-    | | | | ---- Day of week (0 - 7) (Sunday=0 or 7)
-    | | | ------ Month (1 - 12)
-    | | -------- Day of month (1 - 31)
-    | ---------- Hour (0 - 23)
-    ------------ Minute (0 - 59)
+    I recommend a cron schedule to every hour.
 
-> You can also use a helper site such as https://crontab.guru to help you set the optimal execution times.
+    ```
+    ###############################################################################
+    # Crontab to run report_daily_costs
+    ###############################################################################
+    0 * * * * timeout 1h /home/opc/report_daily_costs/run_report_daily_costs.sh >> /home/opc/report_daily_costs/run_report_daily_costs.sh_run.txt 2>&1
+    ```
+
+    *Syntax of crontab:*
+    
+        * * * * * command to be executed
+        - - - - -
+        | | | | |
+        | | | | ---- Day of week (0 - 7) (Sunday=0 or 7)
+        | | | ------ Month (1 - 12)
+        | | -------- Day of month (1 - 31)
+        | ---------- Hour (0 - 23)
+        ------------ Minute (0 - 59)
+
+    > You can also use a helper site such as https://crontab.guru to help you set the optimal execution times.
+
+9. Save and close the file (ESC, then :x or :wq).
 
 ## Create a Policy for this compute to run the script.
 

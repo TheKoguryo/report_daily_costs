@@ -11,6 +11,11 @@ cd $APPDIR
 ###########################################################
 echo "Start running at `date`..."
 
-python3 $APPDIR/report_daily_costs.py -ip --ons_topic_id $ONS_TOPIC_ID
+# cron schedule - 0 * * * * 
+# Notify at 23:00
+#
+# Check the yesterday's cost every hours that is under being calculated.
+# If that cost is more than the cost of the day before yesterday and the difference is over threshold, notify at that time.
+python3 $APPDIR/report_daily_costs.py -ip --ons_topic_id $ONS_TOPIC_ID --alert_threshold 50
 
 echo "Completed at `date`.."
