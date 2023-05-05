@@ -41,7 +41,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         one_day_ago_amount += item.computed_amount
         currency = item.currency
 
-        body = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + "\n"
+        body = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}'
+        body += + " (Calculation in progress...)"
+        body += + "\n"
 
     # Forecast
     data = usage_api_client.request_summarized_usages(
@@ -75,7 +77,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         if item.time_usage_started.strftime('%y-%m-%d') == yesterday.strftime('%y-%m-%d'):
             print("item: " + str(item))
             one_day_ago_forecast_amount += item.computed_amount
-            body += message + " (Calculation in progress, Usage data is typically delayed by approximately twenty four hours.)"
+            body += message
 
         if item.time_usage_started.strftime('%y-%m-%d') == today.strftime('%y-%m-%d'):
             print("item: " + str(item))
@@ -83,7 +85,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
             body += message
 
     difference = (one_day_ago_amount / two_days_ago_amount) * 100 - 100
-    body += "\n\n\nYour monthly invoice might differ from this estimate."
+    body += "\n\n\nYour monthly invoice might differ from this estimate.\nUsage data is typically delayed by approximately twenty four hours."
 
     # Notification
     tenancy = identity_client.get_tenancy(tenant_id).data
