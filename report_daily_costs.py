@@ -99,7 +99,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
     title += currency + " " + f'{one_day_ago_amount:,.0f}'
     title += " (EOM)"
 
-    if difference > alert_threshold or datetime.datetime.now().hour == 13 :
+    if difference > alert_threshold or datetime.datetime.now().hour == 14 :
         logging.getLogger().info("ons_topic_id: " + ons_topic_id)
     
         notification_message = {"title": title, "body": body}
