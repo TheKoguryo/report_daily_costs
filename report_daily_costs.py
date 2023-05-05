@@ -75,7 +75,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         if item.time_usage_started.strftime('%y-%m-%d') == yesterday.strftime('%y-%m-%d'):
             print("item: " + str(item))
             one_day_ago_forecast_amount += item.computed_amount
-            body += message
+            body += message + " (Calculation in progress, Usage data is typically delayed by approximately twenty four hours.)"
 
         if item.time_usage_started.strftime('%y-%m-%d') == today.strftime('%y-%m-%d'):
             print("item: " + str(item))
@@ -83,6 +83,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
             body += message
 
     difference = (one_day_ago_amount / two_days_ago_amount) * 100 - 100
+    body += "\n\n\nYour monthly invoice might differ from this estimate."
 
     # Notification
     tenancy = identity_client.get_tenancy(tenant_id).data
