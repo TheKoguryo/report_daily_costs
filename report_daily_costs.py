@@ -70,17 +70,17 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
             message = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}' + "\n"
 
         if item.time_usage_started.strftime('%y-%m-%d') == two_days_ago.strftime('%y-%m-%d'):
-            print("item: " + str(item))
+            logging.getLogger().debug("item: " + str(item))
             two_days_ago_amount += item.computed_amount
             body = message + body
 
         if item.time_usage_started.strftime('%y-%m-%d') == yesterday.strftime('%y-%m-%d'):
-            print("item: " + str(item))
+            logging.getLogger().debug("item: " + str(item))
             one_day_ago_forecast_amount += item.computed_amount
             body += message
 
         if item.time_usage_started.strftime('%y-%m-%d') == today.strftime('%y-%m-%d'):
-            print("item: " + str(item))
+            logging.getLogger().debug("item: " + str(item))
             today_ago_forecast_amount += item.computed_amount
             body += message
 
