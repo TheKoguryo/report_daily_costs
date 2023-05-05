@@ -8,7 +8,7 @@ import argparse
 
 version = "23.05.04"
 
-def report_daily_costs_with_forecast(tenant_id, ons_topic_id):
+def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
     today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     yesterday = today - datetime.timedelta(days=1)
     two_days_ago = today - datetime.timedelta(days=2)
