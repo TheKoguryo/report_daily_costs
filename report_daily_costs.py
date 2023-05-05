@@ -106,7 +106,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
     
         notification_message = {"title": title, "body": body}
         logging.getLogger().info("notification_message: " + str(notification_message))
-        notification_client.publish_message(ons_topic_id, notification_message)    
+        notification_client.publish_message(ons_topic_id, notification_message)
+    else:
+        print(title)
 
 
 def prep_arguments():
