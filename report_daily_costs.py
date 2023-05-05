@@ -161,6 +161,6 @@ if __name__ == "__main__":
         usage_api_client = oci.usage_api.UsageapiClient(config=config)
 
     ons_topic_id = args.ons_topic_id
-    alert_threshold = args.alert_threshold
+    alert_threshold = float(args.alert_threshold)
 
     report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold)
