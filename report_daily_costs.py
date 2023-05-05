@@ -42,7 +42,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         currency = item.currency
 
         body = "(" + item.time_usage_started.strftime('%m') + "/" + item.time_usage_started.strftime('%d') + ") " + f'{item.computed_amount:,.0f}'
-        body += " (Calculation in progress...)"
+        body += " (calculation in progress...)"
         body += "\n"
 
     # Forecast
@@ -101,7 +101,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
     title += currency + " " + f'{one_day_ago_amount:,.0f}'
     title += " (EOM)"
 
-    if difference > alert_threshold or datetime.datetime.now().hour == 14 :
+    if difference > alert_threshold or datetime.datetime.now().hour == 23 :
         logging.getLogger().info("ons_topic_id: " + ons_topic_id)
     
         notification_message = {"title": title, "body": body}
