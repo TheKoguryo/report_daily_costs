@@ -1,5 +1,7 @@
 # Report Daily Cost using Usage API and Notification
 
+*Do this steps in your home region.*
+
 
 ## Create a Notification Topic and Subscribe
 
@@ -27,11 +29,26 @@
 
 7. Copy the Topic OCID.
 
+
 ## Create a compute instance
 
 1. Open the navigation menu and click Compute. Under Compute, click Instances
 
 2. Create a compute instance
+
+
+## Create a Policy for this compute to run the script.
+
+1. Login to your OCI Cloud console
+
+2. Create new Policy: scheduled-report-daily-costs-policy with Statements:
+
+    - Update the statement with your compute instance id
+
+    ```
+    allow any-user to read usage-reports in tenancy where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
+    allow any-user to use ons-family in tenancy where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
+    ```
 
 ## Setup Report Daily Costs scripts
 
@@ -46,6 +63,7 @@
 3. Copy the report_daily_costs source into /home/opc
 
     ```
+    sudo dnf install git
     git clone https://github.com/TheKoguryo/report_daily_costs.git
     ```
 
@@ -100,7 +118,9 @@
 
 9. Save and close the file (ESC, then :x or :wq).
 
-## Create a Policy for this compute to run the script.
+10. When the cost is more than thread or At 23:00 Every day. 
+
+[Notification Email](notification-email.png)
 
 
 ## Related Documents
