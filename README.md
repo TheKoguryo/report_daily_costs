@@ -120,7 +120,7 @@
 
 10. When the cost is more than thread or At 23:00 Every day. 
 
-[Notification Email](notification-email.png)
+    ![Notification Email](notification-email.png)
 
 
 ## Related Documents
