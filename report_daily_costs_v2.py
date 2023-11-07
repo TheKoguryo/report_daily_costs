@@ -299,9 +299,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         logging.getLogger().info("ons_topic_id: " + ons_topic_id)
     
         notification_message = {"title": notification_title, "body": notification_body}
-        logging.getLogger().info("notification_message: " + str(notification_message))
+        logging.info("notification_message: " + str(notification_message))
 
-        notification_client.publish_message(ons_topic_id, notification_message)    
+        notification_client.publish_message(ons_topic_id, notification_message)
 
 
 def generate_report(tenant_id, d_day_started):
@@ -525,7 +525,7 @@ def generate_report(tenant_id, d_day_started):
     html += "</body>\n"
     html += "</html>\n" 
 
-    print(html)
+    logging.debug(html)
 
     return html
 
