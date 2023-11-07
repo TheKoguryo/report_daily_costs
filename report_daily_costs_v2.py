@@ -296,7 +296,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
     notification_body += "\n\nYour monthly invoice might differ from this estimate. Usage data is typically delayed by approximately twenty four hours."
 
     if difference_percent > alert_threshold or datetime.datetime.now().hour == 23 :
-        logging.getLogger().info("ons_topic_id: " + ons_topic_id)
+        logging.info("ons_topic_id: " + ons_topic_id)
     
         notification_message = {"title": notification_title, "body": notification_body}
         logging.info("notification_message: " + str(notification_message))
