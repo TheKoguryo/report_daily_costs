@@ -7,7 +7,7 @@ import datetime
 import argparse
 from pytz import reference
 
-version = "23.11.07"
+version = "23.11.09"
 
 # Global Variables
 identity_client = None
@@ -26,7 +26,7 @@ d_day_minus_one_service_cost_sum = None
 d_day_minus_one_service_region_cost_sum = None
 
 
-def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
+def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold, bucket_name):
     today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     d_day_started = today - datetime.timedelta(days=1)
     d_day_ended = d_day_started + datetime.timedelta(days=1)
@@ -63,8 +63,11 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         if item.computed_amount is None or item.computed_amount == 0.0:
             continue 
 
+        #if item.service != 'Data Labeling Service - Annotations':
+        #    continue
+
         # Exception Handle
-        #item.service = item.service.replace("(WAF)", "")
+        item.service = item.service.replace("(WAF)", "")
 
         currency = item.currency
         d_day_total_amount += item.computed_amount  
@@ -115,7 +118,13 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
     d_day_minus_one_service_region_cost_sum = dict()
     for item in data.items:
         if item.computed_amount is None or item.computed_amount == 0.0:
-            continue       
+            continue  
+
+        #if item.service != 'Data Labeling Service - Annotations':
+        #    continue
+
+        # Exception Handle
+        item.service = item.service.replace("(WAF)", "")             
 
         d_day_minus_one_total_amount += item.computed_amount
         currency = item.currency
@@ -159,10 +168,10 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         if before_index >= len(d_day_minus_one_costs):
             quantity_str = get_formatted_float_str(after['quantity'])
             amount_str = get_formatted_float_str(after['amount'])
-            difference_str = get_difference_float_str(0, after['amount'])
-            status = 'New - B'     
+            difference_str, info, color = get_difference_float_str(0, after['amount'])
+            status = info   
 
-            row = { 'service': str(after['service']), 'region': str(after['region']), 'sku_name': str(after['sku_name']), 'sku_part_number': str(after['sku_part_number']), 'quantity': quantity_str, 'amount': amount_str, 'difference': difference_str, 'status': status }
+            row = { 'service': str(after['service']), 'region': str(after['region']), 'sku_name': str(after['sku_name']), 'sku_part_number': str(after['sku_part_number']), 'quantity': quantity_str, 'amount': amount_str, 'difference': difference_str, 'status': status, 'color': color }
 
             d_day_costs_for_report.append(row)
             continue
@@ -196,7 +205,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
                             before_index = before_index + 1
 
                             status = "A"
-                            row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': str(before['quantity']), 'amount': str(before['amount']), 'difference': '', 'status': status }
+                            row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': str(before['quantity']), 'amount': str(before['amount']), 'difference': '', 'status': status, 'color': color }
                             d_day_costs_for_report.append(row)
                         else:
                             logging.debug("after['sku_part_number'] < before['sku_part_number']")
@@ -206,9 +215,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
                         logging.debug("after['sku_name'] > before['sku_name']")
                         before_index = before_index + 1
 
-                        status = "B"
-                        difference_str = get_difference_float_str(before['amount'], 0)
-                        row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': '', 'amount': '', 'difference': difference_str, 'status': status }
+                        difference_str, info, color = get_difference_float_str(before['amount'], 0)
+                        status = info  
+                        row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': '', 'amount': '', 'difference': difference_str, 'status': status, 'color': color }
                         d_day_costs_for_report.append(row)                       
                     else:
                         logging.debug("after['sku_name'] < before['sku_name']")
@@ -218,9 +227,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
                     logging.debug("after['region'] > before['region']")
                     before_index = before_index + 1
 
-                    status = "C"
-                    difference_str = get_difference_float_str(before['amount'], 0)
-                    row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': '', 'amount': '', 'difference': difference_str, 'status': status }
+                    difference_str, info, color = get_difference_float_str(before['amount'], 0)
+                    status = info  
+                    row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': '', 'amount': '', 'difference': difference_str, 'status': status, 'color': color }
                     d_day_costs_for_report.append(row)                    
                 else:
                     logging.debug("after['region'] < before['region']")
@@ -229,9 +238,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
                 logging.debug("after['service'] > before['service']")
                 before_index = before_index + 1
 
-                status = "D"
-                difference_str = get_difference_float_str(before['amount'], 0)
-                row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': '', 'amount': '', 'difference': difference_str, 'status': status }
+                difference_str, info, color = get_difference_float_str(before['amount'], 0)
+                status = info  
+                row = { 'service': str(before['service']), 'region': str(before['region']), 'sku_name': str(before['sku_name']), 'sku_part_number': str(before['sku_part_number']), 'quantity': '', 'amount': '', 'difference': difference_str, 'status': status, 'color': color }
                 d_day_costs_for_report.append(row)                   
             else:
                 logging.debug("else")
@@ -240,30 +249,32 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold):
         if match == True:
             quantity_str = get_formatted_float_str(after['quantity'])
             amount_str = get_formatted_float_str(after['amount'])
-            difference_str = get_difference_float_str(before['amount'], after['amount'])
-            status = ''
+            difference_str, info, color = get_difference_float_str(before['amount'], after['amount'])
+            status = info  
 
-            row = { 'service': str(after['service']), 'region': str(after['region']), 'sku_name': str(after['sku_name']), 'sku_part_number': str(after['sku_part_number']), 'quantity': quantity_str, 'amount': amount_str, 'difference': difference_str, 'status': status }
+            row = { 'service': str(after['service']), 'region': str(after['region']), 'sku_name': str(after['sku_name']), 'sku_part_number': str(after['sku_part_number']), 'quantity': quantity_str, 'amount': amount_str, 'difference': difference_str, 'status': status, 'color': color }
 
             d_day_costs_for_report.append(row)
         else:
             # Not Match
             quantity_str = get_formatted_float_str(after['quantity'])
             amount_str = get_formatted_float_str(after['amount'])
-            difference_str = get_difference_float_str(0, after['amount'])
-            status = 'New - A'            
+            difference_str, info, color = get_difference_float_str(0, after['amount'])
+            status = info              
 
-            row = { 'service': str(after['service']), 'region': str(after['region']), 'sku_name': str(after['sku_name']), 'sku_part_number': str(after['sku_part_number']), 'quantity': quantity_str, 'amount': amount_str, 'difference': difference_str, 'status': status }
+            row = { 'service': str(after['service']), 'region': str(after['region']), 'sku_name': str(after['sku_name']), 'sku_part_number': str(after['sku_part_number']), 'quantity': quantity_str, 'amount': amount_str, 'difference': difference_str, 'status': status, 'color': color }
 
             d_day_costs_for_report.append(row)
 
     # Generate HTML Report and Upload to Object Storage
     report_name = "daily-costs-report-" + d_day_started.strftime("%Y-%m-%d")
     body_html = generate_report(tenant_id, d_day_started)
-    report_url = create_report_url(report_name, body_html)
+    report_url = create_report_url(report_name, body_html, bucket_name)
 
     # Notify
-    difference_percent = (d_day_total_amount / d_day_minus_one_total_amount) * 100 - 100
+    difference_percent = 0
+    if d_day_minus_one_total_amount != 0:
+        difference_percent = (d_day_total_amount / d_day_minus_one_total_amount) * 100 - 100
 
     if difference_percent > 0:
         notification_title = "[" + f'{difference_percent:,.2f}' + "% ⬆]"
@@ -311,6 +322,9 @@ def generate_report(tenant_id, d_day_started):
 
     tenant_name = identity_client.get_tenancy(tenant_id).data.name
 
+    get_formatted_float_str(d_day_total_amount-d_day_minus_one_total_amount)
+    difference_str, info, color = get_difference_float_str(d_day_minus_one_total_amount, d_day_total_amount)
+
     html = ""
     html += "<!DOCTYPE html>\n"
     html += "<html lang='en'>\n"
@@ -343,8 +357,8 @@ def generate_report(tenant_id, d_day_started):
     html += "					<table class='table table-condensed table-striped'>\n"
     html += "						<tbody>\n"
     html += "							<tr style='background-color: white;'>\n"
-    html += "								<td colspan='6' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + d_day_started.strftime("%Y-%m-%d") + " (" + localtime.tzname(d_day_started) + ")" + "</td>\n"
-    html += "								<td colspan='6' width='50%' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + currency + " " + get_formatted_float_str(d_day_total_amount)  + "</font> (전일대비: " + currency + " " + get_formatted_float_str(d_day_total_amount-d_day_minus_one_total_amount)  + ")</td>\n"
+    html += "								<td colspan='5' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + d_day_started.strftime("%Y-%m-%d") + " (" + localtime.tzname(d_day_started) + ")" + "</td>\n"
+    html += "								<td colspan='7' width='60%' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + currency + " " + get_formatted_float_str(d_day_total_amount)  + "</font> (전일대비: " + currency + " <font style='color: " + color + ";'>" + difference_str + "(" + info + ")" + "</font> )</td>\n"
     html += "							</tr>\n"
     html += "						</tbody>\n"
     html += "				    </table>\n"    
@@ -402,14 +416,14 @@ def generate_report(tenant_id, d_day_started):
                 d_day_minus_one_service_total_cost = d_day_minus_one_service_cost_sum[row['service']]
             
             d_day_service_total_cost_str = get_formatted_float_str(d_day_service_total_cost)
-            difference_str = get_difference_float_str(d_day_minus_one_service_total_cost, d_day_service_total_cost)
+            difference_str, info, color = get_difference_float_str(d_day_minus_one_service_total_cost, d_day_service_total_cost)
 
             html += "							<!-- Service Start -->\n"
             html += "							<tr data-toggle='collapse' data-target='#" + row['service'].replace(" ","").lower() + "' class='accordion-toggle'>\n"
             html += "								<td colspan='9'><button class='btn btn-default btn-xs'><span class='glyphicon glyphicon-plus'></span></button> " + row['service'] + "</td>\n"
             html += "								<td width='15%' align='right'>" + d_day_service_total_cost_str + "</td>\n"
-            html += "								<td width='15%' align='right'>" + difference_str  + "</td>\n"
-            html += "								<td width='10%'></td>\n"
+            html += "								<td width='15%' align='right' style='color: " + color + ";'>" + difference_str + "</td>\n"
+            html += "								<td width='10%' align='right' style='color: " + color + ";'>" + info + "</td>\n"
             html += "							</tr>\n"
             html += "							<tr>\n"
             html += "								<td colspan='12' class='hiddenRow'>\n"
@@ -446,14 +460,14 @@ def generate_report(tenant_id, d_day_started):
                     d_day_minus_one_service_region_total_cost = d_day_minus_one_service_region_cost_sum[row['service']][row['region']]
 
             d_day_service_region_total_cost_str = get_formatted_float_str(d_day_service_region_total_cost)
-            difference_str = get_difference_float_str(d_day_minus_one_service_region_total_cost, d_day_service_region_total_cost)                    
+            difference_str, info, color = get_difference_float_str(d_day_minus_one_service_region_total_cost, d_day_service_region_total_cost)                    
 
             html += "												<!-- Region Start -->\n"
             html += "												<tr data-toggle='collapse' class='accordion-toggle' data-target='#" + row['service'].replace(" ","").lower() + "_" + row['region'].replace(" ","").lower() + "'>\n"
             html += "													<td colspan='9'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class='btn btn-default btn-xs'><span class='glyphicon glyphicon-plus'></span></button> " + row['region'] + "</td>\n"
             html += "													<td width='15%' align='right'>" + d_day_service_region_total_cost_str + "</td>\n"
-            html += "													<td width='15%' align='right'>" + difference_str + "</td>\n"
-            html += "													<td width='10%'></td>\n"
+            html += "													<td width='15%' align='right' style='color: " + color + ";'>" + difference_str + "</td>\n"
+            html += "													<td width='10%' align='right' style='color: " + color + ";'>" + info + "</td>\n"
             html += "												</tr>\n"
             html += "												<tr>\n"
             html += "													<td colspan='12' class='hiddenRow'>\n"
@@ -483,8 +497,8 @@ def generate_report(tenant_id, d_day_started):
             html += " 																							<td colspan='8'></td>\n"
             html += " 																							<td width='15%' align='right'>" + str(row['quantity']) + "</td>\n"
             html += " 																							<td width='15%' align='right'>" + str(row['amount']) + "</td>\n"
-            html += " 																							<td width='15%' align='right'>" + str(row['difference']) + "</td>\n"
-            html += " 																							<td width='10%' align='right'>" + str(row['status']) + "</td>\n"
+            html += " 																							<td width='15%' align='right' style='color: " + row['color'] + ";'>" + str(row['difference']) + "</td>\n"
+            html += " 																							<td width='10%' align='right' style='color: " + row['color'] + ";'>" + str(row['status']) + "</td>\n"
             html += "																						</tr>\n"
             html += "																					</tbody>\n"
             html += "																				</table>\n"
@@ -529,9 +543,8 @@ def generate_report(tenant_id, d_day_started):
 
     return html
 
-def create_report_url(name, body_html):
+def create_report_url(name, body_html, bucket_name):
     namespace_name = object_storage_client.get_namespace(retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
-    bucket_name = "daily-costs-bucket"
     object_name = name + ".html"
     #body_html = "<html><body><h1>hello</h1></body></html>"
 
@@ -568,22 +581,35 @@ def get_formatted_float_str(float_number):
 def get_difference_float_str(before_amount, after_amount):
     difference = after_amount - before_amount
     difference_float_str = f'{difference:,.2f}'
+    info = ''
+    color = 'none'
 
     if difference_float_str == "0.00":
         pass
     elif difference_float_str == "-0.00":
         difference_float_str = "0.00"
     elif difference_float_str.startswith('-'):
-        pass
+        if before_amount != 0:
+            info = (difference / before_amount) * 100
+            info = f'{info:,.2f}' + '% ⬇'
+        else:
+            info = 'New'
+        color = '#206AE5'
     else:
         difference_float_str = "+" + difference_float_str
+        if before_amount != 0:      
+            info = (difference / before_amount) * 100
+            info = f'{info:,.2f}' + '% ⬆'
+        else:
+            info = 'New'            
+        color = '#fc4c4e'
 
     logging.debug("after_amount: " + str(after_amount))
     logging.debug("before_amount: " + str(before_amount))
     logging.debug("difference: " + str(difference))        
     logging.debug("difference_float_str: " + str(difference_float_str))   
 
-    return difference_float_str
+    return difference_float_str, info, color
 
 def prep_arguments():
     parser = argparse.ArgumentParser()
@@ -593,6 +619,8 @@ def prep_arguments():
                         help='The notification topic id where you want to publish a message for notifying ')
     parser.add_argument('--alert_threshold', default='', dest='alert_threshold',
                         help='The threshold which you want to notify it over than ')    
+    parser.add_argument('--bucket_name', default='daily-costs-bucket', dest='bucket_name',
+                        help='The bucket name which you want to upload the generated report')  
     parser.add_argument('-ip', action='store_true', default=False,
                         help='Use Instance Principals for Authentication')
     
@@ -645,5 +673,8 @@ if __name__ == "__main__":
 
     ons_topic_id = args.ons_topic_id
     alert_threshold = float(args.alert_threshold)
+    bucket_name = args.bucket_name
 
-    report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold)
+    logging.info(bucket_name)
+    
+    report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold, bucket_name)
