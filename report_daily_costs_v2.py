@@ -591,7 +591,7 @@ def get_difference_float_str(before_amount, after_amount):
     elif difference_float_str.startswith('-'):
         if before_amount != 0:
             info = (difference / before_amount) * 100
-            info = f'{info:,.2f}' + '% ⬇'
+            info = f'{info:,.2f}' + '% ' + "<span class='glyphicon glyphicon-arrow-down'></span>"
         else:
             info = 'New'
         color = '#206AE5'
@@ -599,7 +599,7 @@ def get_difference_float_str(before_amount, after_amount):
         difference_float_str = "+" + difference_float_str
         if before_amount != 0:      
             info = (difference / before_amount) * 100
-            info = f'{info:,.2f}' + '% ⬆'
+            info = f'{info:,.2f}' + '% ' + "<span class='glyphicon glyphicon-arrow-up'></span>"
         else:
             info = 'New'            
         color = '#fc4c4e'
