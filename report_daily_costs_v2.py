@@ -6,6 +6,7 @@ import logging
 import datetime
 import argparse
 from pytz import reference
+import requests
 
 version = "23.11.09"
 
@@ -25,6 +26,8 @@ d_day_service_region_cost_sum = None
 d_day_minus_one_service_cost_sum = None
 d_day_minus_one_service_region_cost_sum = None
 
+sku_list = None
+
 
 def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold, bucket_name):
     today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -41,6 +44,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold, b
     global d_day_service_region_cost_sum
     global d_day_minus_one_service_cost_sum
     global d_day_minus_one_service_region_cost_sum
+
+    ## SKU
+    gather_sku_info()
 
     ## D-Day : Yesterday
     data = usage_api_client.request_summarized_usages(
@@ -358,7 +364,7 @@ def generate_report(tenant_id, d_day_started):
     html += "						<tbody>\n"
     html += "							<tr style='background-color: white;'>\n"
     html += "								<td colspan='5' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + d_day_started.strftime("%Y-%m-%d") + " (" + localtime.tzname(d_day_started) + ")" + "</td>\n"
-    html += "								<td colspan='7' width='60%' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + currency + " " + get_formatted_float_str(d_day_total_amount)  + "</font> (전일대비: " + currency + " <font style='color: " + color + ";'>" + difference_str + "(" + info + ")" + "</font> )</td>\n"
+    html += "								<td colspan='7' width='60%' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + currency + " " + get_formatted_float_str(d_day_total_amount)  + "</font> (전일대비: " + currency + " <font style='color: " + color + ";'>" + difference_str + " (" + info + ")" + "</font> )</td>\n"
     html += "							</tr>\n"
     html += "						</tbody>\n"
     html += "				    </table>\n"    
@@ -494,7 +500,8 @@ def generate_report(tenant_id, d_day_started):
             html += "																				<table class='table table-condensed table-striped'>\n"
             html += "																					<tbody>\n"
             html += "																						<tr style='background-color: white;'>\n"
-            html += " 																							<td colspan='8'></td>\n"
+            #html += " 																							<td colspan='8'></td>\n"
+            html += " 																							<td colspan='8'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + get_sku_part_metricName(row['sku_part_number']) + "</td>\n"            
             html += " 																							<td width='15%' align='right'>" + str(row['quantity']) + "</td>\n"
             html += " 																							<td width='15%' align='right'>" + str(row['amount']) + "</td>\n"
             html += " 																							<td width='15%' align='right' style='color: " + row['color'] + ";'>" + str(row['difference']) + "</td>\n"
@@ -572,7 +579,45 @@ def create_report_url(name, body_html, bucket_name):
 
     return object_par_url
 
+def get_sku_part_metricName(part_number):
+    metric_name = ''
 
+    try:
+        metric_name = sku_list[part_number]
+    except KeyError:
+        logging.debug("Key Not Found - " + part_number)
+
+    return metric_name
+
+def gather_sku_info():
+    global sku_list
+
+    sku_list = dict()
+    response = None
+
+    try:
+        logging.debug("gather_sku_info() - Check Access to OCI Public Rates URL (Required Internet Access)...")
+        api_url = "https://apexapps.oracle.com/pls/apex/cetools/api/v1/products/?currencyCode=USD"
+        response = requests.get(api_url)
+        logging.debug("gather_sku_info() - Success")
+    except Exception:
+        logging.warning("gather_sku_info() - Issue with Internet, List Price will no be extracted")
+
+    logging.debug("response: " + str(response.json()))
+
+    jsonData = response.json()
+    items = jsonData['items']    
+
+    for item in items:
+        logging.debug("item.partNumber: " + item['partNumber'])
+        logging.debug("item.metricName: " + item['metricName'])
+        sku_list[item['partNumber']] = item['metricName']
+
+    # Exception Handle
+    sku_list['B89652'] = 'Gateway Per Hour'        
+
+    logging.debug("sku_list: " + str(sku_list))
+    
 def get_formatted_float_str(float_number):
     float_str = f'{float_number:,.2f}'
 
