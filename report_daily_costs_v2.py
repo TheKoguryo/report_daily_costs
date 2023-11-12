@@ -8,7 +8,7 @@ import argparse
 from pytz import reference
 import requests
 
-version = "23.11.09"
+version = "23.11.12"
 
 # Global Variables
 identity_client = None
@@ -29,7 +29,7 @@ d_day_minus_one_service_region_cost_sum = None
 sku_list = None
 
 
-def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold, bucket_name):
+def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n):
     today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     d_day_started = today - datetime.timedelta(days=1)
     d_day_ended = d_day_started + datetime.timedelta(days=1)
@@ -282,43 +282,85 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold, b
     if d_day_minus_one_total_amount != 0:
         difference_percent = (d_day_total_amount / d_day_minus_one_total_amount) * 100 - 100
 
-    if difference_percent > 0:
-        notification_title = "[" + f'{difference_percent:,.2f}' + "% ⬆]"
-    elif difference_percent == 0:
-        notification_title = "[No Difference]"
+    previous_notify_date = None
+
+    try:
+        file = open("notification.status", 'r')
+        previous_notify_date = file.readline().strip()
+        previous_notify_percent = int(str(file.readline()))
+        file.close()
+    except Exception:
+        previous_notify_date = "2001-01-01"
+        previous_notify_percent = -1000
+
+    isNotify = False
+
+    if previous_notify_date == d_day_started.strftime("%Y-%m-%d"):
+        logging.info("1")
+        if previous_notify_percent + alert_threshold_n < difference_percent:
+            # Additional Notify
+            isNotify = True
+            logging.info("1-1")
+            pass
+        else:
+            # Does not Notify
+            logging.info("1-2")
+            pass
     else:
-        notification_title = "[" + f'{difference_percent:,.2f}' + "% ⬇]"
+        logging.info("2")
+        if difference_percent > alert_threshold or datetime.datetime.now().hour == 23:
+            # Notify
+            isNotify = True
+            logging.info("2-1:")
+        else:
+            logging.info("2-2")
 
-    tenant_name = identity_client.get_tenancy(tenant_id).data.name
-    localtime = reference.LocalTimezone()
+    if isNotify == True:
+        logging.info("previous_notify_date: " + previous_notify_date)
+        logging.info("previous_notify_percent: " + str(previous_notify_percent))
+        logging.info("Notify - " + d_day_started.strftime("%Y-%m-%d") + ", " + str(difference_percent))
 
-    notification_title += " Tenancy " + tenant_name + ": Daily Cost Report (" + d_day_started.strftime("%m/%d") + " " + localtime.tzname(d_day_started) + ") - "
-    notification_title += currency + " " + f'{d_day_total_amount:,.0f}'
-    
-    notification_body = "OCI Daily Costs Report for " + tenant_name + " - 집계시간: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + localtime.tzname(d_day_started) + ")\n"
-    notification_body += "- " + d_day_minus_one_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_minus_one_total_amount:,.0f}' + "\n"
-    notification_body += "- " + d_day_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_total_amount:,.0f}' + " (calculation in progress...) "
+        if difference_percent > 0:
+            notification_title = "[" + f'{difference_percent:,.2f}' + "% ⬆]"
+        elif difference_percent == 0:
+            notification_title = "[No Difference]"
+        else:
+            notification_title = "[" + f'{difference_percent:,.2f}' + "% ⬇]"
 
-    if difference_percent > 0:
-        notification_body += "[" + f'{difference_percent:,.2f}' + "% ⬆]"
-    elif difference_percent == 0:
-        pass
-    else:
-        notification_body += "[" + f'{difference_percent:,.2f}' + "% ⬇]"
+        tenant_name = identity_client.get_tenancy(tenant_id).data.name
+        localtime = reference.LocalTimezone()
 
-    notification_body += "\n\n\n"    
-    notification_body += "Go To the detailed report: "
-    notification_body += " -> " + report_url + "\n"
+        notification_title += " Tenancy " + tenant_name + ": Daily Cost Report (" + d_day_started.strftime("%m/%d") + " " + localtime.tzname(d_day_started) + ") - "
+        notification_title += currency + " " + f'{d_day_total_amount:,.0f}'
+        
+        notification_body = "OCI Daily Costs Report for " + tenant_name + " - 집계시간: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + localtime.tzname(d_day_started) + ")\n"
+        notification_body += "- " + d_day_minus_one_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_minus_one_total_amount:,.0f}' + "\n"
+        notification_body += "- " + d_day_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_total_amount:,.0f}' + " (calculation in progress...) "
 
-    notification_body += "\n\nYour monthly invoice might differ from this estimate. Usage data is typically delayed by approximately twenty four hours."
+        if difference_percent > 0:
+            notification_body += "[" + f'{difference_percent:,.2f}' + "% ⬆]"
+        elif difference_percent == 0:
+            pass
+        else:
+            notification_body += "[" + f'{difference_percent:,.2f}' + "% ⬇]"
 
-    if difference_percent > alert_threshold or datetime.datetime.now().hour == 23 :
+        notification_body += "\n\n\n"    
+        notification_body += "Go To the detailed report: "
+        notification_body += " -> " + report_url + "\n"
+
+        notification_body += "\n\nYour monthly invoice might differ from this estimate. Usage data is typically delayed by approximately twenty four hours."
+
         logging.info("ons_topic_id: " + ons_topic_id)
     
         notification_message = {"title": notification_title, "body": notification_body}
         logging.info("notification_message: " + str(notification_message))
 
         notification_client.publish_message(ons_topic_id, notification_message)
+
+        file = open("notification.status", 'w')
+        file.write(d_day_started.strftime("%Y-%m-%d") + "\n")
+        file.write(str(int(difference_percent)) + "\n")
+        file.close()         
 
 
 def generate_report(tenant_id, d_day_started):
@@ -336,8 +378,10 @@ def generate_report(tenant_id, d_day_started):
     html += "<html lang='en'>\n"
     html += "<head>\n"
     html += "	<meta charset='UTF-8'>\n"
+    html += "	<meta http-equiv='X-UA-Compatible' content='IE=edge'>\n"
+    html += "	<meta name='viewport' content='width=device-width, initial-scale=1'>\n"
     html += "	<title>OCI Daily Costs Report</title>\n"
-    html += "	<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css'>\n"
+    html += "	<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css' integrity='sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu' crossorigin='anonymous'>\n"
     html += "	<style>\n"
     html += "		body {\n"
     html += "			padding-top: 50px;\n"
@@ -358,13 +402,13 @@ def generate_report(tenant_id, d_day_started):
     html += "	<div class='container'>\n"
     html += "		<div class='col-md-12'>\n"
     html += "			<div class='panel panel-default'>\n"
-    html += "				<div class='panel-heading'>OCI Daily Costs Report for <font style='font-weight: bold;'>" + tenant_name + "</font> - 집계시간: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + localtime.tzname(d_day_started) + ") </div>\n"
+    html += "				<div class='panel-heading'>OCI Daily Costs Report for <font style='font-weight: bold;'>" + tenant_name + "</font> - Execution date: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + localtime.tzname(d_day_started) + ") </div>\n"
     html += "				<div class='panel-body'>\n"
     html += "					<table class='table table-condensed table-striped'>\n"
     html += "						<tbody>\n"
     html += "							<tr style='background-color: white;'>\n"
     html += "								<td colspan='5' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + d_day_started.strftime("%Y-%m-%d") + " (" + localtime.tzname(d_day_started) + ")" + "</td>\n"
-    html += "								<td colspan='7' width='60%' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + currency + " " + get_formatted_float_str(d_day_total_amount)  + "</font> (전일대비: " + currency + " <font style='color: " + color + ";'>" + difference_str + " (" + info + ")" + "</font> )</td>\n"
+    html += "								<td colspan='7' width='60%' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + currency + " " + get_formatted_float_str(d_day_total_amount)  + "</font> ( " + currency + " <font style='color: " + color + ";'>" + difference_str + " (" + info + ")" + "</font> )</td>\n"
     html += "							</tr>\n"
     html += "						</tbody>\n"
     html += "				    </table>\n"    
@@ -541,8 +585,9 @@ def generate_report(tenant_id, d_day_started):
     html += "			</div>\n"
     html += "		</div>\n"
     html += "	</div>\n"
-    html += "	<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>\n"
-    html += "	<script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js'></script>\n"
+    html += "	<script src='https://code.jquery.com/jquery-1.12.4.min.js' integrity='sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ' crossorigin='anonymous'></script>\n"
+    html += "	<script src='https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js' integrity='sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd' crossorigin='anonymous'></script>\n"
+
     html += "</body>\n"
     html += "</html>\n" 
 
@@ -664,6 +709,8 @@ def prep_arguments():
                         help='The notification topic id where you want to publish a message for notifying ')
     parser.add_argument('--alert_threshold', default='', dest='alert_threshold',
                         help='The threshold which you want to notify it over than ')    
+    parser.add_argument('--alert_threshold_n', default='', dest='alert_threshold_n',
+                        help='The threshold which you want to notify it over than ')      
     parser.add_argument('--bucket_name', default='daily-costs-bucket', dest='bucket_name',
                         help='The bucket name which you want to upload the generated report')  
     parser.add_argument('-ip', action='store_true', default=False,
@@ -718,8 +765,9 @@ if __name__ == "__main__":
 
     ons_topic_id = args.ons_topic_id
     alert_threshold = float(args.alert_threshold)
+    alert_threshold_n = float(args.alert_threshold_n)
     bucket_name = args.bucket_name
 
     logging.info(bucket_name)
     
-    report_daily_costs_with_forecast(tenant_id, ons_topic_id, alert_threshold, bucket_name)
+    report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n)
