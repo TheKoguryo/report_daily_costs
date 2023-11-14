@@ -5,8 +5,8 @@ import oci
 import logging
 import datetime
 import argparse
-from pytz import reference
 import requests
+import pytz
 
 version = "23.11.12"
 
@@ -28,9 +28,11 @@ d_day_minus_one_service_region_cost_sum = None
 
 sku_list = None
 
+timezone = pytz.timezone('UTC')
+
 
 def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n):
-    today = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = datetime.datetime.now(timezone).replace(hour=0, minute=0, second=0, microsecond=0)
     d_day_started = today - datetime.timedelta(days=1)
     d_day_ended = d_day_started + datetime.timedelta(days=1)
     d_day_minus_one_started = today - datetime.timedelta(days=2)
@@ -272,11 +274,6 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
 
             d_day_costs_for_report.append(row)
 
-    # Generate HTML Report and Upload to Object Storage
-    report_name = "daily-costs-report-" + d_day_started.strftime("%Y-%m-%d")
-    body_html = generate_report(tenant_id, d_day_started)
-    report_url = create_report_url(report_name, body_html, bucket_name)
-
     # Notify
     difference_percent = 0
     if d_day_minus_one_total_amount != 0:
@@ -308,7 +305,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
             pass
     else:
         logging.info("2")
-        if difference_percent > alert_threshold or datetime.datetime.now().hour == 23:
+        if difference_percent > alert_threshold or datetime.datetime.now(timezone).hour == 23:
             # Notify
             isNotify = True
             logging.info("2-1:")
@@ -316,6 +313,11 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
             logging.info("2-2")
 
     if isNotify == True:
+        # Generate HTML Report and Upload to Object Storage
+        report_name = "daily-costs-report-" + d_day_started.strftime("%Y-%m-%d")
+        body_html = generate_report(tenant_id, d_day_started)
+        report_url = create_report_url(report_name, body_html, bucket_name)
+
         logging.info("previous_notify_date: " + previous_notify_date)
         logging.info("previous_notify_percent: " + str(previous_notify_percent))
         logging.info("Notify - " + d_day_started.strftime("%Y-%m-%d") + ", " + str(difference_percent))
@@ -328,12 +330,11 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
             notification_title = "[" + f'{difference_percent:,.2f}' + "% ⬇]"
 
         tenant_name = identity_client.get_tenancy(tenant_id).data.name
-        localtime = reference.LocalTimezone()
 
-        notification_title += " Tenancy " + tenant_name + ": Daily Cost Report (" + d_day_started.strftime("%m/%d") + " " + localtime.tzname(d_day_started) + ") - "
+        notification_title += " Tenancy " + tenant_name + ": Daily Cost Report (" + d_day_started.strftime("%m/%d") + " " + d_day_started.tzname() + ") - "
         notification_title += currency + " " + f'{d_day_total_amount:,.0f}'
         
-        notification_body = "OCI Daily Costs Report for " + tenant_name + " - 집계시간: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + localtime.tzname(d_day_started) + ")\n"
+        notification_body = "OCI Daily Costs Report for " + tenant_name + " - 집계시간: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + d_day_started.tzname() + ")\n"
         notification_body += "- " + d_day_minus_one_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_minus_one_total_amount:,.0f}' + "\n"
         notification_body += "- " + d_day_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_total_amount:,.0f}' + " (calculation in progress...) "
 
@@ -364,9 +365,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
 
 
 def generate_report(tenant_id, d_day_started):
-    localtime = reference.LocalTimezone()
-
-    logging.info("d_day_started:" + d_day_started.strftime("%Y-%m-%d (") + localtime.tzname(d_day_started) + ")")
+    logging.info("d_day_started:" + d_day_started.strftime("%Y-%m-%d (") + d_day_started.tzname() + ")")
 
     tenant_name = identity_client.get_tenancy(tenant_id).data.name
 
@@ -401,12 +400,12 @@ def generate_report(tenant_id, d_day_started):
     html += "	<div class='container'>\n"
     html += "		<div class='col-md-12'>\n"
     html += "			<div class='panel panel-default'>\n"
-    html += "				<div class='panel-heading'>OCI Daily Costs Report for <font style='font-weight: bold;'>" + tenant_name + "</font> - Execution date: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + localtime.tzname(d_day_started) + ") </div>\n"
+    html += "				<div class='panel-heading'>OCI Daily Costs Report for <font style='font-weight: bold;'>" + tenant_name + "</font> - Execution date: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + d_day_started.tzname() + ") </div>\n"
     html += "				<div class='panel-body'>\n"
     html += "					<table class='table table-condensed table-striped'>\n"
     html += "						<tbody>\n"
     html += "							<tr style='background-color: white;'>\n"
-    html += "								<td colspan='5' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + d_day_started.strftime("%Y-%m-%d") + " (" + localtime.tzname(d_day_started) + ")" + "</td>\n"
+    html += "								<td colspan='5' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + d_day_started.strftime("%Y-%m-%d") + " (" + d_day_started.tzname() + ")" + "</td>\n"
     html += "								<td colspan='7' width='60%' style='text-align: center;border-top: 0px'> <font style='font-size: xx-large;'>" + currency + " " + get_formatted_float_str(d_day_total_amount)  + "</font> ( " + currency + " <font style='color: " + color + ";'>" + difference_str + " (" + info + ")" + "</font> )</td>\n"
     html += "							</tr>\n"
     html += "						</tbody>\n"
@@ -601,7 +600,7 @@ def create_report_url(name, body_html, bucket_name):
 
     object_storage_client.put_object(namespace_name, bucket_name, object_name, body_html.encode('utf-8'), content_type="text/html")
 
-    par_time_expires = datetime.datetime.now() + datetime.timedelta(days=1)
+    par_time_expires = datetime.datetime.now(timezone) + datetime.timedelta(days=1)
     #par_name = "daily-costs-bucket-" + d_day_started.strftime("%Y-%m-%d")
     par_name = "par for " + name + ".html"
 
@@ -730,7 +729,7 @@ if __name__ == "__main__":
 
     # Starts a timer for the execution time.
     logging.info('Report Daily Costs v{0}'.format(version))
-    start_time = datetime.datetime.now()
+    start_time = datetime.datetime.now(timezone)
     logging.info('Script execution start time: {0}'.format(
         start_time.replace(microsecond=0).isoformat()))    
 
