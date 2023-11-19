@@ -334,7 +334,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
         notification_title += " Tenancy " + tenant_name + ": Daily Cost Report (" + d_day_started.strftime("%m/%d") + " " + d_day_started.tzname() + ") - "
         notification_title += currency + " " + f'{d_day_total_amount:,.0f}'
         
-        notification_body = "OCI Daily Costs Report for " + tenant_name + " - 집계시간: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + d_day_started.tzname() + ")\n"
+        notification_body = "OCI Daily Costs Report for " + tenant_name + " - Execution date: " + start_time.strftime("%Y-%m-%d %H:%M:%S") + " (" + d_day_started.tzname() + ")\n"
         notification_body += "- " + d_day_minus_one_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_minus_one_total_amount:,.0f}' + "\n"
         notification_body += "- " + d_day_started.strftime("%m/%d") + ": " + currency + " " + f'{d_day_total_amount:,.0f}' + " (calculation in progress...) "
 
