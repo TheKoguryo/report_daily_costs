@@ -575,6 +575,9 @@ def generate_report(tenant_id, d_day_started):
         html += "									</div>\n"
         html += "								</td>\n"
         html += "							</tr>\n"
+        html += "                           <tr style='background-color: white;'>\n"
+        html += "                               <td colspan='12' align='right' style='color: #fc4c4e;'>Your monthly invoice might differ from this estimate. Usage data is typically delayed by approximately twenty four hours.</td>\n"
+        html += "                           </tr>"
         html += "							<!-- Service End -->\n"
 
     html += "						</tbody>\n"
