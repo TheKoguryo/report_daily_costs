@@ -56,7 +56,7 @@
 
     - Update `request.instance.id` with your compute instance id
     - Update `target.bucket.name` with your Bucket name
-    - Update `<compartment-name>` with your compartment name that the compute instance is located in
+    - Replace `<compartment-name>` with your compartment name that the compute instance is located in
 
 
         ```
