@@ -292,6 +292,13 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
 
     isNotify = False
 
+    logging.info("previous_notify_date: " + str(previous_notify_date))
+    logging.info("previous_notify_percent: " + str(previous_notify_percent))
+    logging.info("d_day_started: " + str(d_day_started.strftime("%Y-%m-%d")))
+    logging.info("difference_percent: " + str(difference_percent))
+    logging.info("alert_threshold: " + str(alert_threshold))
+    logging.info("alert_threshold_n: " + str(alert_threshold_n))
+    
     if previous_notify_date == d_day_started.strftime("%Y-%m-%d"):
         logging.info("1")
         if previous_notify_percent + alert_threshold_n < difference_percent:
