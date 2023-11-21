@@ -16,7 +16,7 @@ echo "Start running at `date`..."
 # Notify at 23:00 UCT
 #
 # Check the yesterday's cost every hours that is under being calculated.
-* (Your monthly invoice might differ from this estimate. Usage data is typically delayed by approximately twenty four hours.)
+# (Your monthly invoice might differ from this estimate. Usage data is typically delayed by approximately twenty four hours.)
 # at 23:00 UCT: Notify the yesterday's cost
 # at 00:00 UCT ~ 22:00 UCT: If the yesterday's cost is more than the cost of the day before yesterday and the difference is over threshold, notify at that time.
 # at 00:00 UCT ~ 22:00 UCT: At the same day, another notification will be occurred when the new difference is over the first notified difference + second threshold(alert_threshold_n)
