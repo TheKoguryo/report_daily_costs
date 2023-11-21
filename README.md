@@ -54,13 +54,14 @@
 
 2. Create new Policy: `scheduled-report-daily-costs-policy` with Statements:
 
-    - Update request.instance.id with your compute instance id
-    - Update target.bucket.name with your Bucket name
+    - Update `request.instance.id` with your compute instance id
+    - Update `target.bucket.name` with your Bucket name
+    - Update `<compartment-name>` with your compartment name that the compute instance is located in    
 
     ```
     allow any-user to read usage-reports in tenancy where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
-    allow any-user to use ons-family in compartment oci-hol where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
-    allow any-user to manage objects in compartment oci-hol where all {request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....', target.bucket.name='daily-costs-bucket', any {request.permission='OBJECT_CREATE', request.permission='OBJECT_DELETE', request.permission='OBJECT_READ', request.permission='PAR_MANAGE'}}
+    allow any-user to use ons-family in compartment <compartment-name> where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
+    allow any-user to manage objects in compartment <compartment-name> where all {request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....', target.bucket.name='daily-costs-bucket', any {request.permission='OBJECT_CREATE', request.permission='OBJECT_DELETE', request.permission='OBJECT_READ', request.permission='PAR_MANAGE'}}
     ```
 
 ## Setup Report Daily Costs scripts
