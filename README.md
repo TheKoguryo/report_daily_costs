@@ -30,24 +30,37 @@
 7. Copy the Topic OCID.
 
 
+## Create a Object Storage Bucket
+
+1. Open the navigation menu and click **Storage**. Under **Object Storage & Archive Storage**, click **Bucket**.
+
+2. Click **Create Bucket**. Enter the following:
+
+    - Bucket Name: ex, `daily-costs-bucket`
+
+
 ## Create a compute instance
 
-1. Open the navigation menu and click Compute. Under Compute, click Instances
+1. Open the navigation menu and click **Compute**. Under **Compute**, click **Instances**.
 
 2. Create a compute instance
+
+3. Copy the instance's OCID.
 
 
 ## Create a Policy for this compute to run the script.
 
 1. Login to your OCI Cloud console
 
-2. Create new Policy: scheduled-report-daily-costs-policy with Statements:
+2. Create new Policy: `scheduled-report-daily-costs-policy` with Statements:
 
-    - Update the statement with your compute instance id
+    - Update request.instance.id with your compute instance id
+    - Update target.bucket.name with your Bucket name
 
     ```
     allow any-user to read usage-reports in tenancy where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
-    allow any-user to use ons-family in tenancy where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
+    allow any-user to use ons-family in compartment oci-hol where request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....'
+    allow any-user to manage objects in compartment oci-hol where all {request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....', target.bucket.name='daily-costs-bucket', any {request.permission='OBJECT_CREATE', request.permission='OBJECT_DELETE', request.permission='OBJECT_READ', request.permission='PAR_MANAGE'}}
     ```
 
 ## Setup Report Daily Costs scripts
@@ -67,21 +80,27 @@
     git clone https://github.com/TheKoguryo/report_daily_costs.git
     ```
 
-4. Update the value of ONS_TOPIC_ID to your Topic OCID in run_report_daily_costs.sh
+4. Update the value of ONS_TOPIC_ID to your Topic OCID and the value of BUCKET_NAME to your Bucket in run_report_daily_costs.sh
 
     ```
     export ONS_TOPIC_ID=ocid1.onstopic.oc1.iad.aaaaaaaa.....
+    export BUCKET_NAME=daily-costs-bucket
     ```
 
-5. Update the value of alert-threshold in run_report_daily_costs.sh
+5. Update the value of alert-threshold, alert_threshold_n in run_report_daily_costs.sh
 
     ```
     # cron schedule - 0 * * * * 
-    # Notify at 23:00
+    # Notify at 23:00 UCT
     #
     # Check the yesterday's cost every hours that is under being calculated.
-    # If that cost is more than the cost of the day before yesterday and the difference is over threshold, notify at that time.
-    python3 $APPDIR/report_daily_costs.py -ip --ons_topic_id $ONS_TOPIC_ID --alert-threshold 50
+    * (Your monthly invoice might differ from this estimate. Usage data is typically delayed by approximately twenty four hours.)
+    # at 23:00 UCT: Notify the yesterday's cost
+    # at 00:00 UCT ~ 22:00 UCT: If the yesterday's cost is more than the cost of the day before yesterday and the difference is over threshold, notify at that time.
+    # at 00:00 UCT ~ 22:00 UCT: At the same day, another notification will be occurred when the new difference is over the first notified difference + second threshold(alert_threshold_n)
+
+    python3 $APPDIR/report_daily_costs_v2.py -ip --ons_topic_id $ONS_TOPIC_ID --bucket_name $BUCKET_NAME --alert_threshold 30 --alert_threshold_n 20
+
     ```
 
 6. Create a cron job. In the terminal, type:
@@ -120,7 +139,33 @@
 
 10. When the cost is more than thread or At 23:00 Every day. 
 
-    ![Notification Email](notification-email.png)
+    - Email
+
+        ![Notification Email](notification-email.png)
+
+    - Detailed Report
+    
+        ![OCI Daily Costs Report](oci-daily-costs-report.png)
+
+
+## Notification Topic - Another Subscription
+
+1. Click the created topic
+
+2. Click **Create Subscription**. Enter the following:
+
+    - Protocol: Slack
+
+3. Configure the required setting as the following.
+
+    - [How to send notification on Slack using Webhooks](https://learnoci.cloud/how-to-send-notification-on-slack-using-webhooks-5e36f1d46295)
+
+4. You can see the notification message in your slack
+
+    - Slack
+
+        ![Notification Slack](notification-slack.png)
+
 
 
 ## Related Documents
