@@ -368,7 +368,9 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
         file = open("notification.status", 'w')
         file.write(d_day_started.strftime("%Y-%m-%d") + "\n")
         file.write(str(int(difference_percent)) + "\n")
-        file.close()         
+        file.close()
+
+        delete_expired_preauthenticated_requests(bucket_name)       
 
 
 def generate_report(tenant_id, d_day_started):
@@ -708,6 +710,27 @@ def get_difference_float_str(before_amount, after_amount):
     logging.debug("difference_float_str: " + str(difference_float_str))   
 
     return difference_float_str, info, color
+
+def delete_expired_preauthenticated_requests(bucket_name):
+    today = datetime.datetime.now(timezone).replace(hour=0, minute=0, second=0, microsecond=0)
+    namespace_name = object_storage_client.get_namespace(retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY).data
+
+    data = list_preauthenticated_requests_response = object_storage_client.list_preauthenticated_requests(
+        namespace_name=namespace_name,
+        bucket_name=bucket_name,
+        limit=50).data
+
+    for item in data:
+
+        if today > item.time_expires:
+            # Expired           
+            delete_preauthenticated_request_response = object_storage_client.delete_preauthenticated_request(
+                namespace_name=namespace_name,
+                bucket_name=bucket_name,
+                par_id=item.id)
+            
+            logging.info('expired_preauthenticated_requests: name' + item.name + ", id: " + item.id + " is deleted.")   
+
 
 def prep_arguments():
     parser = argparse.ArgumentParser()
