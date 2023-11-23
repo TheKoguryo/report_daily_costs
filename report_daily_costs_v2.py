@@ -8,7 +8,7 @@ import argparse
 import requests
 import pytz
 
-version = "23.11.12"
+version = "23.11.22"
 
 # Global Variables
 identity_client = None
