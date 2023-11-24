@@ -30,6 +30,8 @@ sku_list = None
 
 timezone = pytz.timezone('UTC')
 
+report_url_service_life = 7
+
 
 def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n):
     today = datetime.datetime.now(timezone).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -612,7 +614,7 @@ def create_report_url(name, body_html, bucket_name):
 
     object_storage_client.put_object(namespace_name, bucket_name, object_name, body_html.encode('utf-8'), content_type="text/html")
 
-    par_time_expires = datetime.datetime.now(timezone) + datetime.timedelta(days=1)
+    par_time_expires = datetime.datetime.now(timezone) + datetime.timedelta(days=report_url_service_life)
     #par_name = "daily-costs-bucket-" + d_day_started.strftime("%Y-%m-%d")
     par_name = "par for " + name + ".html"
 
