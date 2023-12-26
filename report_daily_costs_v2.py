@@ -137,6 +137,8 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
 
         # Exception Handle
         item.service = item.service.replace("(WAF)", "")             
+        item.service = item.service.replace('Oracle ', '', 1)
+        item.service = item.service.replace('OCI ', '', 1)
 
         d_day_minus_one_total_amount += item.computed_amount
         currency = item.currency
