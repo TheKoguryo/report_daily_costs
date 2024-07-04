@@ -312,9 +312,14 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
             isNotify = True
             logging.info("1-1")
             pass
+        elif datetime.datetime.now(timezone).hour == 23:
+            # Additional Notify
+            isNotify = True
+            logging.info("1-2")
+            pass
         else:
             # Does not Notify
-            logging.info("1-2")
+            logging.info("1-3")
             pass
     else:
         logging.info("2")
