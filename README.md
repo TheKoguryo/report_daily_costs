@@ -1,4 +1,6 @@
-# Report Daily Cost using Usage API and Notification
+# oci-daily-cost-report
+
+Report Daily Cost using Usage API and Notification
 
 *Do this steps in your home region.*
 
@@ -65,7 +67,7 @@
         allow any-user to manage objects in compartment <compartment-name> where all {request.instance.id='ocid1.instance.oc1.iad.aaaaaaaa.....', target.bucket.name='daily-costs-bucket', any {request.permission='OBJECT_CREATE', request.permission='OBJECT_DELETE', request.permission='OBJECT_READ', request.permission='PAR_MANAGE'}}
         ```
 
-## Setup Report Daily Costs scripts
+## Setup
 
 1. SSH into the instance
 
@@ -75,21 +77,21 @@
     pip3 install oci
     ```
 
-3. Copy the report_daily_costs source into /home/opc
+3. Copy the oci-daily-cost-report source into /home/opc
 
     ```
     sudo dnf install git
-    git clone https://github.com/TheKoguryo/report_daily_costs.git
+    git clone https://github.com/TheKoguryo/oci-daily-cost-report.git
     ```
 
-4. Update the value of ONS_TOPIC_ID to your Topic OCID and the value of BUCKET_NAME to your Bucket in run_report_daily_costs.sh
+4. Update the value of ONS_TOPIC_ID to your Topic OCID and the value of BUCKET_NAME to your Bucket in run_oci-daily-cost-report.sh
 
     ```
     export ONS_TOPIC_ID=ocid1.onstopic.oc1.iad.aaaaaaaa.....
     export BUCKET_NAME=daily-costs-bucket
     ```
 
-5. Update the value of alert-threshold, alert_threshold_n in run_report_daily_costs.sh
+5. Update the value of alert-threshold, alert_threshold_n in run_oci-daily-cost-report.sh
 
     ```
     # cron schedule - 0 * * * * 
@@ -119,9 +121,9 @@
 
     ```
     ###############################################################################
-    # Crontab to run report_daily_costs
+    # Crontab to run oci-daily-cost-report
     ###############################################################################
-    0 * * * * timeout 1h /home/opc/report_daily_costs/run_report_daily_costs.sh >> /home/opc/report_daily_costs/run_report_daily_costs.sh_run.txt 2>&1
+    0 * * * * timeout 1h /home/opc/oci-daily-cost-report/run_oci-daily-cost-report.sh >> /home/opc/oci-daily-cost-report/run_oci-daily-cost-report.sh_run.txt 2>&1
     ```
 
     *Syntax of crontab:*
@@ -147,7 +149,7 @@
 
     - Detailed Report
     
-        ![OCI Daily Costs Report](oci-daily-costs-report.png)
+        ![OCI Daily Costs Report](oci-daily-cost-report.png)
 
 
 ## Notification Topic - Another Subscription

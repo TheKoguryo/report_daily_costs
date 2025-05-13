@@ -165,7 +165,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
     # sort by service
     d_day_minus_one_costs = sorted(costs, key=lambda k: (k['service'], k['region'], k['sku_name'], k['sku_part_number']))
     for row in d_day_minus_one_costs:
-        logging.debug("BEFORE SORTED: " + str(row))
+        logging.debug("AFTER SORTED: " + str(row))
 
     logging.debug("d_day_minus_one_service_cost_sum: " + str(d_day_minus_one_service_cost_sum))
     logging.debug("d_day_minus_one_service_region_cost_sum: " + str(d_day_minus_one_service_region_cost_sum))            
@@ -326,7 +326,7 @@ def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert
         if difference_percent > alert_threshold or datetime.datetime.now(timezone).hour == 23:
             # Notify
             isNotify = True
-            logging.info("2-1:")
+            logging.info("2-1")
         else:
             logging.info("2-2")
 
@@ -811,5 +811,14 @@ if __name__ == "__main__":
     bucket_name = args.bucket_name
 
     logging.info(bucket_name)
-    
-    report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n)
+
+    trial = 1
+    while trial <= 3:
+        try:
+            logging.info("report_daily_costs_with_forecast - " + str(trial))
+            report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n)
+            break
+        except Exception as e:
+            logging.info(str(e) + "\n")
+
+        trial = trial + 1
