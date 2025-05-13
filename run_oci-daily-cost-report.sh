@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export APPDIR=$HOME/report_daily_costs
+export APPDIR=$HOME/oci-daily-cost-report
 export TENANT_ID=ocid1.tenancy.oc1..aaaaaaaa.....
 export ONS_TOPIC_ID=ocid1.onstopic.oc1.iad.aaaaaaaa.....
 export BUCKET_NAME=daily-costs-bucket

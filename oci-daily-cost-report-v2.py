@@ -33,7 +33,7 @@ timezone = pytz.timezone('UTC')
 report_url_service_life = 7
 
 
-def report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n):
+def report_daily_cost_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n):
     today = datetime.datetime.now(timezone).replace(hour=0, minute=0, second=0, microsecond=0)
     d_day_started = today - datetime.timedelta(days=1)
     d_day_ended = d_day_started + datetime.timedelta(days=1)
@@ -815,8 +815,8 @@ if __name__ == "__main__":
     trial = 1
     while trial <= 3:
         try:
-            logging.info("report_daily_costs_with_forecast - " + str(trial))
-            report_daily_costs_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n)
+            logging.info("report_daily_cost_with_forecast - " + str(trial))
+            report_daily_cost_with_forecast(tenant_id, ons_topic_id, bucket_name, alert_threshold, alert_threshold_n)
             break
         except Exception as e:
             logging.info(str(e) + "\n")
