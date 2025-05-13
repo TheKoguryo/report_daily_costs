@@ -21,6 +21,6 @@ echo "Start running at `date`..."
 # at 00:00 UCT ~ 22:00 UCT: If the yesterday's cost is more than the cost of the day before yesterday and the difference is over threshold, notify at that time.
 # at 00:00 UCT ~ 22:00 UCT: At the same day, another notification will be occurred when the new difference is over the first notified difference + second threshold(alert_threshold_n)
 
-python3 $APPDIR/oci-daily-cost-report_v2.py -ip --ons_topic_id $ONS_TOPIC_ID --bucket_name $BUCKET_NAME --alert_threshold 30 --alert_threshold_n 20
+python3 $APPDIR/oci-daily-cost-report-v2.py -ip --ons_topic_id $ONS_TOPIC_ID --bucket_name $BUCKET_NAME --alert_threshold 30 --alert_threshold_n 20
 
 echo "Completed at `date`.."
